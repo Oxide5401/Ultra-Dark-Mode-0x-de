@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         🌑 Ultra Dark Mode 0x!de v6.2.0
-// @namespace    https://github.com/ultra-dark-mode
-// @version      6.2.6
+// @name         🌑 Ultra Dark Mode 0xide
+// @namespace    https://github.com/Oxide5401/Ultra-Dark-Mode-0x-de.git
+// @version      7.2.7
 // @description  8 strategies · smart element rounding · per-site CSS · element picker · unlimited custom palettes · schedule · PDF renderer · full dashboard
 // @author       Oxide
 // @match        *://*/*
@@ -14,6 +14,15 @@
 // @run-at       document-start
 // ==/UserScript==
 
+// 7.2.7 — Fixed: floating UI (dropdowns/menus/dialogs) turning transparent and
+// showing the page behind them on sites that use PascalCase component class
+// names (e.g. GitHub/Primer's "Overlay", "SelectMenu", "Popover", "Dialog").
+// `[class*="overlay"]` never matched class="Overlay" — CSS attribute selectors
+// are case-sensitive by default, unlike the .toLowerCase() checks already used
+// in the JS heuristics further down. Added the `i` flag to every class-substring
+// selector in BASE_CSS/applyLayer, plus a native `[popover]` and
+// dropdown/dialog fallback, and a GitHub-specific safety-net patch.
+
 (function () {
   'use strict';
 
@@ -24,7 +33,7 @@
     'google.com':       { strategy:'variables', excludeSelectors:['img.rIPJA','.l5R2jf'], css:`body,#searchform,#rcnt,#center_col{background:var(--udm-bg)!important}.g,.rc{background:var(--udm-bg-1)!important;border-color:var(--udm-border)!important}h3.LC20lb{color:var(--udm-link)!important}.VwiC3b{color:var(--udm-text-muted)!important}` },
     'twitter.com':      { strategy:'variables', excludeSelectors:['[data-testid="tweetPhoto"] img','[data-testid="videoPlayer"]'], css:`[data-testid="primaryColumn"]{background:var(--udm-bg)!important}[data-testid="sidebarColumn"]{background:var(--udm-bg-1)!important}` },
     'reddit.com':       { strategy:'variables', excludeSelectors:[], css:`:root{--color-neutral-background-weak:var(--udm-bg)!important;--color-neutral-background-strong:var(--udm-bg-1)!important}shreddit-app,#main-content{background:var(--udm-bg)!important}` },
-    'github.com':       { strategy:'variables', excludeSelectors:['.avatar','.header-logo'], css:`.blob-code-inner,.blob-num{background:var(--udm-code-bg)!important}.highlight .pl-c{color:#8b949e!important}.highlight .pl-k{color:#ff7b72!important}.highlight .pl-s{color:#a5d6ff!important}` },
+    'github.com':       { strategy:'variables', excludeSelectors:['.avatar','.header-logo'], css:`.blob-code-inner,.blob-num{background:var(--udm-code-bg)!important}.highlight .pl-c{color:#8b949e!important}.highlight .pl-k{color:#ff7b72!important}.highlight .pl-s{color:#a5d6ff!important}.Overlay,.Overlay-body,.Overlay-header,.Overlay-footer,.SelectMenu,.SelectMenu-modal,.SelectMenu-list,.Popover,.Popover-message,.Dialog,details-dialog,details-menu,anchored-position,[popover]{background-color:var(--udm-surface)!important;color:var(--udm-text)!important;border-color:var(--udm-border)!important}` },
     'notion.so':        { strategy:'heuristic', excludeSelectors:['.notion-image-block img'], css:`.notion-page-content,.notion-app-inner{background:var(--udm-bg)!important;color:var(--udm-text)!important}.notion-sidebar,.notion-topbar{background:var(--udm-bg-1)!important}` },
     'wikipedia.org':    { strategy:'override',  excludeSelectors:['.mw-logo','figure img'], css:`#content,.mw-body{background:var(--udm-bg)!important;color:var(--udm-text)!important}#mw-head,#mw-panel{background:var(--udm-bg-1)!important}.infobox{background:var(--udm-surface)!important}` },
     'stackoverflow.com':{ strategy:'variables', excludeSelectors:[], css:`.s-sidebarwidget{background:var(--udm-surface)!important;border-color:var(--udm-border)!important}code.s-code-block{background:var(--udm-code-bg)!important}` },
@@ -265,19 +274,19 @@
 
   const BASE_CSS=`html,body{background-color:var(--udm-bg)!important;color:var(--udm-text)!important;-webkit-font-smoothing:antialiased!important;-moz-osx-font-smoothing:grayscale!important}
 header,footer,main,article,section,aside,nav,div,span,li,ul,ol,fieldset,
-.container,.wrapper,[class*="container"],[class*="wrapper"],[class*="card"],
-[class*="panel"],[class*="modal"],[class*="sidebar"],[class*="navbar"],
-[class*="header"]:not([class*="text"]),[class*="footer"],[class*="menu"],[class*="widget"]
+.container,.wrapper,[class*="container" i],[class*="wrapper" i],[class*="card" i],
+[class*="panel" i],[class*="modal" i],[class*="sidebar" i],[class*="navbar" i],
+[class*="header" i]:not([class*="text" i]),[class*="footer" i],[class*="menu" i],[class*="widget" i]
 {background-color:transparent;border-color:var(--udm-border)!important}
 header,nav,footer,.navbar,.sidebar,.topbar,[role="banner"],[role="navigation"],[role="contentinfo"]
 {background-color:var(--udm-bg-1)!important}
-.card,.panel,[class*="card"],[class*="panel"],[class*="widget"]
+.card,.panel,[class*="card" i],[class*="panel" i],[class*="widget" i]
 {background-color:var(--udm-surface)!important;border-radius:var(--udm-radius-card)!important}
 input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
 textarea,select,[contenteditable="true"]
 {background-color:var(--udm-input-bg)!important;color:var(--udm-text)!important;border-color:var(--udm-border)!important;border-radius:var(--udm-radius-input)!important}
 input::placeholder,textarea::placeholder{color:var(--udm-text-muted)!important}
-button,[role="button"],[type="button"],[type="submit"],.btn,[class*="btn"],[class*="button"]
+button,[role="button"],[type="button"],[type="submit"],.btn,[class*="btn" i],[class*="button" i]
 {background-color:var(--udm-surface-1)!important;color:var(--udm-text)!important;border-color:var(--udm-border)!important;border-radius:var(--udm-radius-btn)!important}
 a{color:var(--udm-link)!important}a:hover{color:var(--udm-link-hover)!important}
 table{border-collapse:collapse}
@@ -285,7 +294,7 @@ th,td{background-color:transparent!important;border-color:var(--udm-border)!impo
 tr:hover td{background-color:var(--udm-surface)!important}thead th{background-color:var(--udm-surface-1)!important}
 code,kbd,samp{background-color:var(--udm-code-bg)!important;color:#e2c08d!important;border-color:var(--udm-border)!important;border-radius:var(--udm-radius-code)!important}
 pre{background-color:var(--udm-code-bg)!important;color:#e2c08d!important;border-color:var(--udm-border)!important;border-radius:var(--udm-radius-sm)!important}
-[class*="badge"],[class*="chip"],[class*="tag"],[class*="label"]:not(label)
+[class*="badge" i],[class*="chip" i],[class*="tag" i],[class*="label" i]:not(label)
 {border-radius:var(--udm-radius-badge)!important}
 ::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:var(--udm-bg)}
 ::-webkit-scrollbar-thumb{background:var(--udm-border);border-radius:4px;transition:background .15s}
@@ -293,10 +302,10 @@ pre{background-color:var(--udm-code-bg)!important;color:#e2c08d!important;border
 ::selection{background-color:#264f78!important;color:var(--udm-text)!important}
 :focus-visible{outline:2px solid var(--udm-link)!important;outline-offset:2px!important}
 h1,h2,h3,h4,h5,h6{text-shadow:none!important}
-.shadow,[class*='shadow']{box-shadow:0 4px 16px var(--udm-shadow)!important}
-[role="dialog"],[role="alertdialog"],[class*="modal"],[class*="overlay"],[class*="popup"],[class*="tooltip"],[class*="popover"]
+.shadow,[class*='shadow' i]{box-shadow:0 4px 16px var(--udm-shadow)!important}
+[role="dialog"],[role="alertdialog"],[popover],[class*="modal" i],[class*="overlay" i],[class*="popup" i],[class*="tooltip" i],[class*="popover" i],[class*="dropdown" i],[class*="dialog" i]
 {background-color:var(--udm-surface)!important;color:var(--udm-text)!important;border-color:var(--udm-border)!important;border-radius:var(--udm-radius-modal)!important}
-hr,[class*="divider"]{border-color:var(--udm-border)!important;background-color:var(--udm-border)!important}
+hr,[class*="divider" i]{border-color:var(--udm-border)!important;background-color:var(--udm-border)!important}
 [style*="background-color: white"],[style*="background-color:#fff"],[style*="background-color: #fff"],
 [style*="background-color:#ffffff"],[style*="background: white"],[style*="background:#fff"]
 {background-color:var(--udm-bg-1)!important;color:var(--udm-text)!important;border-radius:var(--udm-radius-input)!important}
@@ -433,9 +442,9 @@ const radVar=(/input|textarea|select|button|\.btn/i.test(sel))?'var(--udm-radius
   [role="banner"], [role="navigation"], [role="contentinfo"] {
     background-color: ${p.bg1};
   }
-  .card, .panel, [class*="card"], [class*="panel"], [class*="widget"],
-  [role="dialog"], [role="alertdialog"], [class*="modal"], [class*="popup"],
-  [class*="tooltip"], [class*="popover"] {
+  .card, .panel, [class*="card" i], [class*="panel" i], [class*="widget" i],
+  [role="dialog"], [role="alertdialog"], [popover], [class*="modal" i], [class*="popup" i],
+  [class*="tooltip" i], [class*="popover" i], [class*="dropdown" i], [class*="dialog" i] {
     background-color: ${p.surf}; color: ${p.text};
     border-color: ${p.border}; border-radius: var(--udm-radius-card);
   }
@@ -445,7 +454,7 @@ const radVar=(/input|textarea|select|button|\.btn/i.test(sel))?'var(--udm-radius
     border-color: ${p.border}; border-radius: var(--udm-radius-input);
   }
   button, [role="button"], [type="button"], [type="submit"],
-  .btn, [class*="btn"], [class*="button"] {
+  .btn, [class*="btn" i], [class*="button" i] {
     background-color: ${p.surf1}; color: ${p.text};
     border-color: ${p.border}; border-radius: var(--udm-radius-btn);
   }
@@ -2167,7 +2176,6 @@ a { color: var(--udm-link) !important; } a:hover { color: var(--udm-link-hover) 
   GM_registerMenuCommand('📋 Export',             exportSettings);
   GM_registerMenuCommand('📐 Cycle Strategy',     cycleStrategy);
   GM_registerMenuCommand('🎨 Cycle Palette',      ()=>{const pal=allPaletteKeys();const next=pal[(pal.indexOf(computePalette())+1)%pal.length];handleSetPalette(next);});
-  Object.keys(PALETTES).forEach(p=>GM_registerMenuCommand(`🎨 ${p}`,()=>handleSetPalette(p)));
   // Note: custom palettes are dynamic (created at runtime) so they can't be
   // registered as GM menu entries at boot — use the panel or dashboard instead.
 
